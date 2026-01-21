@@ -104,7 +104,7 @@ class StateMinMaxNormalizer(gym.ObservationWrapper):
 
     
 def construct():
-    env = gym.make("FlappyBird-v0", render_mode="human", use_lidar=False)
+    env = gym.make("FlappyBird-v0", render_mode="rgb_array", use_lidar=False)
     #env = StateNormalizer(env)
     #env = StateMinMaxNormalizer(env)
     env.reset()

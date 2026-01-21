@@ -148,7 +148,32 @@ def calculateLoss(pNet, tNet, buffer, device):
     dones = torch.tensor(dones, dtype=torch.bool).to(device)
     nextstates = torch.tensor(nextstates, dtype=torch.float32).to(device)
     #no need to add reward because this is the neural net is estimating the q value for the state already
-    qActionsTaken = pNet(states).gather(    1, actions.unsqueeze(-1)).squeeze(-1)
+    # qActionsTaken = pNet(states).gather(    1, actions.unsqueeze(-1)).squeeze(-1)
+    # #dont compute any gradients since we dont need to update the target network here
+    
+    # with torch.no_grad():
+        
+    #     next_q_policy = pNet(nextstates) 
+    #     next_actions = next_q_policy.argmax(dim=1)
+        
+    #     next_q_target = tNet(nextstates) 
+    #     q_next_states = next_q_target.gather(1, next_actions.unsqueeze(-1)).squeeze(-1) 
+        
+    #     q_next_states[dones] = 0.0
+        
+        
+    #     # q_next_states = tNet(nextstates).to(device).max(1).values
+
+    #     # # for i in range(len(dones)):
+    #     # #     if dones[i]:
+    #     # #         q_next_states[i] = 0
+    #     # #this line basically replaced the line above, but is more optimized
+    #     # q_next_states[dones] = 0.0
+    #     # #freeze backpropogation on this tensor because its not being used
+
+    #     # q_next_states.detach()
+
+    qActionsTaken = pNet(states).gather(1, actions.unsqueeze(-1)).squeeze(-1)
     #dont compute any gradients since we dont need to update the target network here
     
     with torch.no_grad():
@@ -160,18 +185,6 @@ def calculateLoss(pNet, tNet, buffer, device):
         q_next_states = next_q_target.gather(1, next_actions.unsqueeze(-1)).squeeze(-1) 
         
         q_next_states[dones] = 0.0
-        
-        
-        # q_next_states = tNet(nextstates).to(device).max(1).values
-
-        # # for i in range(len(dones)):
-        # #     if dones[i]:
-        # #         q_next_states[i] = 0
-        # #this line basically replaced the line above, but is more optimized
-        # q_next_states[dones] = 0.0
-        # #freeze backpropogation on this tensor because its not being used
-
-        # q_next_states.detach()
 
         
 
@@ -290,7 +303,7 @@ if __name__ == "__main__":
             if frames % 1000 == 0:
                 print(f"Frame: {frames} | Loss: {loss.item():.6f}")
 
-            print("Training completed.")
+            
 
 
 
