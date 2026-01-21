@@ -1,4 +1,6 @@
 from Wrappers import construct
+from Wrappers import constructNormalizer
+
 from dqn import DQN
 
 import argparse
@@ -17,11 +19,11 @@ from tensorboardX import SummaryWriter
 gamma = 0.99
 epsilon = 0.01
 
-decayRate = 150000
+decayRate = 50000
 minEpsilon = 0.01
 batchSize  = 32
 replaySize = 50000
-updateRate = 10000
+updateRate = 1000
 rewardCutoff = 100
 Experience = namedtuple(
     'Experience', field_names=['state', 'action', 'reward',
@@ -205,7 +207,7 @@ def calculateLoss(pNet, tNet, buffer, device):
 if __name__ == "__main__":
     
     
-    env = construct()
+    env = constructNormalizer()
     rms = RunningMeanStd(shape=(12,)) 
     device = torch.device("mps")
     buffer = ReplayBuffer()
