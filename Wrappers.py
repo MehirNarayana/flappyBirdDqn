@@ -2,7 +2,7 @@ import cv2
 import gymnasium as gym
 import gymnasium.spaces
 import numpy as np
-
+import torch
 import flappy_bird_gymnasium
 from collections import deque
 from gymnasium.wrappers import ResizeObservation
@@ -48,9 +48,10 @@ class RunningMeanStd:
 
 class StateNormalizer(gym.ObservationWrapper):
     """Keeps all features (no reduction). Always uses running mean/std normalization."""
-    def __init__(self, env, warmup=20000):
+    def __init__(self, env, warmup=20000, rms=None, freeze=False):
         super().__init__(env)
-        self.rms = RunningMeanStd(shape=(12,))
+        self.rms = rms if rms is not None else RunningMeanStd(shape=(12,)) 
+        self.freeze = freeze
         low = -np.inf * np.ones((12,), dtype=np.float32)
         high = np.inf * np.ones((12,), dtype=np.float32)
         self.steps = 0 
@@ -60,9 +61,11 @@ class StateNormalizer(gym.ObservationWrapper):
     def observation(self, obs):
         obs = np.array(obs, dtype=np.float32)
         normalized = self.rms.normalize(obs)   # normalize using previous stats
-        if self.steps > self.warmup: 
-            self.rms.update(obs)
-        self.steps+=1                  # then incorporate this obs into stats
+        if not self.freeze:
+            if self.steps > self.warmup: 
+                self.rms.update(obs)
+            self.steps+=1                  # then incorporate this obs into stats
+        print("raw obs:", normalized[:10])
         return normalized
     
 
@@ -81,7 +84,7 @@ class StateMinMaxNormalizer(gym.ObservationWrapper):
         height = 512.0
         max_v = 10.0
         min_v = -9
-
+        
         mins = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, min_v], dtype=np.float32)
         maxs = np.array([width, height, height, width, height, height, height, max_v], dtype=np.float32)
 
@@ -101,9 +104,23 @@ class StateMinMaxNormalizer(gym.ObservationWrapper):
 
 
 
+
+
+def constructNormalizerHuman():
+    env = gym.make("FlappyBird-v0", render_mode="human", use_lidar=False)
+    env = StateNormalizer(env, rms=torch.load("rms_stats.pth"), freeze=True)
+
+    #env = StateMinMaxNormalizer(env)
+    env.reset()
+    
+    print(env.observation_space.shape)
+    
+    return env
+
+
 def constructNormalizer():
     env = gym.make("FlappyBird-v0", render_mode="rgb_array", use_lidar=False)
-    env = StateNormalizer(env)
+    env = StateNormalizer(env,)
     #env = StateMinMaxNormalizer(env)
     env.reset()
     

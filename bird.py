@@ -1,5 +1,6 @@
 from Wrappers import construct
 from Wrappers import constructNormalizer
+from Wrappers import constructNormalizerHuman
 
 from dqn import DQN
 
@@ -18,7 +19,7 @@ from tensorboardX import SummaryWriter
 
 gamma = 0.99
 epsilon = 0.01
-
+tau = 0.005
 decayRate = 50000
 minEpsilon = 0.01
 batchSize  = 32
@@ -131,13 +132,19 @@ class Agent():
 
         return saveReward
     
-    def playFree(self, net):
+    def playFree(self, net, device):
         with torch.no_grad():
-            torch_state = torch.tensor(np.array([self.state]), dtype=torch.float32).to(device)
-            pred = net(torch_state)
-            _, action = torch.max(pred, dim=1)
-            action = int(action.item())
+            torch_state = torch.tensor([self.state], dtype=torch.float32).to(device)
+            q_values = net(torch_state)
+            print("Q-values:", q_values.cpu().numpy())
+            action = q_values.argmax(dim=1).item()
+
         nextState, reward, terminated, truncated, info = self.env.step(action)
+        self.state = nextState
+
+        if terminated or truncated:
+            self.reset()
+
         return terminated or truncated
 
 
@@ -206,9 +213,12 @@ def calculateLoss(pNet, tNet, buffer, device):
 
 if __name__ == "__main__":
     
+    if playFree:
+        env = constructNormalizerHuman()
+    else:
+
+        env = constructNormalizer()
     
-    env = constructNormalizer()
-    rms = RunningMeanStd(shape=(12,)) 
     device = torch.device("mps")
     buffer = ReplayBuffer()
     writer = SummaryWriter(comment="-flappy-bird-dqn")
@@ -220,7 +230,7 @@ if __name__ == "__main__":
     policyNet = DQN(env.observation_space.shape, env.action_space.n).to(device)
     targetNet = DQN(env.observation_space.shape, env.action_space.n).to(device)
     if playFree:
-        weights = torch.load("best_119.dat", map_location=device)
+        weights = torch.load("best_225.dat", map_location=device)
 
         policyNet.load_state_dict(weights)
     #targetNet.load_state_dict(weights)
@@ -231,7 +241,7 @@ if __name__ == "__main__":
 
     while True:
         if playFree:
-            if agent.playFree(policyNet):
+            if agent.playFree(policyNet, device):
                 break
         else:
             frames+=1
@@ -257,17 +267,22 @@ if __name__ == "__main__":
 
                 if best_reward is None or best_reward < reward:
                     torch.save(policyNet.state_dict(),
-                            "best_%.0f.dat" % reward)
+                            "best.dat")
                     if best_reward is not None:
                         print("Best reward updated %.3f -> %.3f" % (
                             best_reward, reward))
+                        
                     best_reward = reward
+                    if env.steps > env.warmup:
+                        torch.save(env.rms, "rms_stats.pth")
+
                 
                 if mean_reward>rewardCutoff:
                     
                     msg = "done in" + str(frames) + "frames"
                     print(msg)
                     torch.save(policyNet.state_dict(), "solved.dat")
+                    torch.save(env.rms, "solved_rms.pth")
                     break
                     
                     
@@ -282,10 +297,14 @@ if __name__ == "__main__":
             
 
 
-            if frames%updateRate == 0:
-                #update model weights
-                targetNet.load_state_dict(policyNet.state_dict()) 
-                print(f"Frame {frames}: Target network synced")
+            
+            for tp, p in zip(targetNet.parameters(), policyNet.parameters()):
+                tp.data.copy_(tp.data * (1 - tau) + p.data * tau)
+
+            # if frames%updateRate == 0:
+            #     #update model weights
+            #     targetNet.load_state_dict(policyNet.state_dict()) 
+            #     print(f"Frame {frames}: Target network synced")
 
 
             if not buffer.full():
