@@ -62,10 +62,12 @@ class StateNormalizer(gym.ObservationWrapper):
         obs = np.array(obs, dtype=np.float32)
         normalized = self.rms.normalize(obs)   # normalize using previous stats
         if not self.freeze:
-            if self.steps > self.warmup: 
+            if self.steps < self.warmup: 
                 self.rms.update(obs)
-            self.steps+=1                  # then incorporate this obs into stats
-        print("raw obs:", normalized[:10])
+            self.steps+=1 
+        
+        if self.steps%1000 == 0:
+            print("raw obs:", normalized[:10])
         return normalized
     
 
