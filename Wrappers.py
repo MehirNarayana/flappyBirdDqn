@@ -11,10 +11,6 @@ from gymnasium.wrappers import ResizeObservation
 from gymnasium.wrappers import FrameStackObservation
 
 
-
-
-
-
 class RunningMeanStd:
     def __init__(self, shape, eps=1e-4):
         self.mean = np.zeros(shape, dtype=np.float64)
@@ -43,36 +39,30 @@ class RunningMeanStd:
         return np.clip((x - self.mean) / std, -clip, clip)
 
 
-
-   
-
 class StateNormalizer(gym.ObservationWrapper):
     """Keeps all features (no reduction). Always uses running mean/std normalization."""
+
     def __init__(self, env, warmup=20000, rms=None, freeze=False):
         super().__init__(env)
-        self.rms = rms if rms is not None else RunningMeanStd(shape=(12,)) 
+        self.rms = rms if rms is not None else RunningMeanStd(shape=(12,))
         self.freeze = freeze
         low = -np.inf * np.ones((12,), dtype=np.float32)
         high = np.inf * np.ones((12,), dtype=np.float32)
-        self.steps = 0 
+        self.steps = 0
         self.warmup = warmup
         self.observation_space = gym.spaces.Box(low=low, high=high, dtype=np.float32)
 
     def observation(self, obs):
         obs = np.array(obs, dtype=np.float32)
-        normalized = self.rms.normalize(obs)   # normalize using previous stats
+        normalized = self.rms.normalize(obs)  # normalize using previous stats
         if not self.freeze:
-            if self.steps < self.warmup: 
+            if self.steps < self.warmup:
                 self.rms.update(obs)
-            self.steps+=1 
-        
-        if self.steps%1000 == 0:
+            self.steps += 1
+
+        if self.steps % 1000 == 0:
             print("raw obs:", normalized[:10])
         return normalized
-    
-
-
-
 
 
 class StateMinMaxNormalizer(gym.ObservationWrapper):
@@ -80,15 +70,19 @@ class StateMinMaxNormalizer(gym.ObservationWrapper):
     Drops features [0,1,2,11] and min-max normalizes the remaining 8 features to [0,1].
     Kept features (original indices): [3,4,5,6,7,8,9,10]
     """
+
     def __init__(self, env):
         super().__init__(env)
         width = 288.0
         height = 512.0
         max_v = 10.0
         min_v = -9
-        
+
         mins = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, min_v], dtype=np.float32)
-        maxs = np.array([width, height, height, width, height, height, height, max_v], dtype=np.float32)
+        maxs = np.array(
+            [width, height, height, width, height, height, height, max_v],
+            dtype=np.float32,
+        )
 
         self._mins = mins
         self._maxs = maxs
@@ -98,61 +92,40 @@ class StateMinMaxNormalizer(gym.ObservationWrapper):
 
     def observation(self, obs):
         obs = np.array(obs, dtype=np.float32)
-        kept = obs[[3,4,5,6,7,8,9,10]].astype(np.float32)
-        denom = (self._maxs - self._mins)
+        kept = obs[[3, 4, 5, 6, 7, 8, 9, 10]].astype(np.float32)
+        denom = self._maxs - self._mins
         denom[denom == 0.0] = 1.0
         scaled = (kept - self._mins) / denom
         return np.clip(scaled, 0.0, 1.0).astype(np.float32)
 
 
-
-
-
-def constructNormalizerHuman():
+def constructNormalizerHuman(rmsPath="flappy_bird_normalization.pth"):
+    rms = torch.load(rmsPath, weights_only=False)
     env = gym.make("FlappyBird-v0", render_mode="human", use_lidar=False)
-    env = StateNormalizer(env, rms=torch.load("rms_stats.pth"), freeze=True)
-
-    #env = StateMinMaxNormalizer(env)
+    env = StateNormalizer(env, rms=rms, freeze=True)
     env.reset()
-    
     print(env.observation_space.shape)
-    
     return env
 
 
 def constructNormalizer():
     env = gym.make("FlappyBird-v0", render_mode="rgb_array", use_lidar=False)
-    env = StateNormalizer(env,)
-    #env = StateMinMaxNormalizer(env)
+    env = StateNormalizer(
+        env,
+    )
+
     env.reset()
-    
+
     print(env.observation_space.shape)
-    
+
     return env
-    
+
 
 def construct():
     env = gym.make("FlappyBird-v0", render_mode="rgb_array", use_lidar=False)
-    #env = StateNormalizer(env)
-    #env = StateMinMaxNormalizer(env)
+
     env.reset()
-    
+
     print(env.observation_space.shape)
-    
+
     return env
-    
-
-    #print(env.res])
-    
-    
-    
-    
-    
-    
-    #return new_state
-
-
-
-
-
-

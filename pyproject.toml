@@ -1,0 +1,7 @@
+[tool.ruff]
+line-length = 88
+extend-exclude = ["venv", "runs"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
