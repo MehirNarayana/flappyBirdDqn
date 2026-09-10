@@ -2,6 +2,12 @@
 
 I built this project after reading Maxim Lapan's ```Deep Reinforcement Learning Hands-On```, to put what I'd learned into practice. The goal was to teach an agent to play Flappy Bird.
 
+## Example run
+
+[![Watch the Flappy Bird agent play](https://img.youtube.com/vi/hueP16FkSwY/hqdefault.jpg)](https://www.youtube.com/watch?v=hueP16FkSwY)
+
+[Watch the agent run on YouTube](https://www.youtube.com/watch?v=hueP16FkSwY).
+
 ## Model architecture
 
 The agent uses a fully connected PyTorch network with a 12-value game-state vector as input:
