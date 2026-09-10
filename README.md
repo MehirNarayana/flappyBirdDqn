@@ -4,9 +4,13 @@ I built this project after reading Maxim Lapan's ```Deep Reinforcement Learning 
 
 ## Example run
 
-[![Watch the Flappy Bird agent play](https://img.youtube.com/vi/hueP16FkSwY/hqdefault.jpg)](https://www.youtube.com/watch?v=hueP16FkSwY)
-
-[Watch the agent run on YouTube](https://www.youtube.com/watch?v=hueP16FkSwY).
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=hueP16FkSwY">
+    <img src="https://img.youtube.com/vi/hueP16FkSwY/hqdefault.jpg" alt="Watch the Flappy Bird agent play" width="480">
+  </a>
+  <br>
+  <a href="https://www.youtube.com/watch?v=hueP16FkSwY">Watch the agent run on YouTube</a>
+</p>
 
 ## Model architecture
 
