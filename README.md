@@ -31,9 +31,9 @@ Training uses **Double DQN**: the policy network selects the next action, while 
 Use Python 3.11 and run from the project root:
 
 ```sh
-python3 -m venv venv
+python3.11 -m venv venv
 source venv/bin/activate
-python -m pip install -r requirements.txt
+python -m pip install -e .
 
 python bird.py --mode train
 python bird.py --mode inference
@@ -51,8 +51,10 @@ Device selection otherwise prefers CUDA, then MPS, then CPU. View training curve
 
 ## Formatting
 
+Dependencies are defined in `pyproject.toml`. Install the `dev` extra to include Ruff:
+
 ```sh
-python -m pip install -r requirements-dev.txt
+python -m pip install -e '.[dev]'
 python -m ruff format .
 python -m ruff format --check .
 ```

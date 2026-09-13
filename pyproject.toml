@@ -1,3 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "flappy-bird-dqn-vector"
+version = "0.1.0"
+description = "A Double DQN agent that learns Flappy Bird from game-state vectors"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "flappy-bird-gymnasium==0.4.0",
+    "gymnasium==1.2.3",
+    "numpy==2.2.6",
+    "opencv-python==4.12.0.88",
+    "tensorboard==2.20.0",
+    "torch==2.9.1",
+]
+
+[project.optional-dependencies]
+dev = ["ruff==0.16.6"]
+
+[tool.setuptools]
+py-modules = ["bird", "dqn", "Wrappers"]
+
 [tool.ruff]
 line-length = 88
 extend-exclude = ["venv", "runs"]
